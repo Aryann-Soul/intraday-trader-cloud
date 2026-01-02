@@ -9,20 +9,25 @@ st.set_page_config(layout="wide")
 st.title("📊 Intraday Trading Dashboard")
 st.caption("Auto-refresh | Index aligned | Cloud hosted")
 
-# Auto refresh every 5 minutes
-st_autorefresh(interval=300000, key="auto_refresh")
+st_autorefresh(interval=300000, key="auto")
 
 
 def is_market_open():
+    utc_now = datetime.utcnow()
     india = pytz.timezone("Asia/Kolkata")
-    now = datetime.now(india).time()
-    return dtime(9, 15) <= now <= dtime(15, 30)
+    ist_now = utc_now.replace(tzinfo=pytz.utc).astimezone(india)
+    now = ist_now.time()
+    return dtime(9, 20) <= now <= dtime(15, 30)
 
 
-MODE = st.radio("Mode", ["Scanner"], horizontal=True)
+st.markdown("""
+### Signal Types
+- 🔥 **HIGH MOMENTUM** → Strong volume + volatility (fast moves)
+- ✅ **NORMAL** → Clean trend-aligned setups
+""")
 
 if not is_market_open():
-    st.info("Market closed. Data updates after 9:15 AM IST.")
+    st.info("Market not active. Scanner runs between 9:20 AM – 3:30 PM IST.")
     st.stop()
 
 NSE_200 = [
