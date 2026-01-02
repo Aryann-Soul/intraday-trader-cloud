@@ -2,7 +2,7 @@ from engine.data_loader import load_intraday_csv
 from engine.indicators import add_indicators
 from engine.index_bias import get_index_bias
 from engine.signal_engine import generate_signal
-from engine.confidence import score_signal
+from engine.confidence import classify_signal
 
 
 def scan_symbols(symbols):
@@ -15,14 +15,14 @@ def scan_symbols(symbols):
 
             bias = get_index_bias(df)
             signal, reason = generate_signal(df, bias, symbol)
-            confidence, risk = score_signal(df, signal)
+            tier, confidence = classify_signal(df, signal)
 
-            if signal != "NO TRADE":
+            if tier != "NO TRADE":
                 results.append({
                     "Symbol": symbol,
                     "Signal": signal,
+                    "Type": tier,
                     "Confidence": confidence,
-                    "Risk": risk,
                     "Reason": reason
                 })
 
