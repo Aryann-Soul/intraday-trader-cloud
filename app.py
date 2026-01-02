@@ -15,17 +15,20 @@ symbol = st.selectbox(
 )
 
 if st.button("Refresh Signal"):
-    df = load_intraday_csv(symbol)
-    df = add_indicators(df)
+    with st.spinner("Fetching NSE data..."):
+        try:
+            df = load_intraday_csv(symbol)
+            df = add_indicators(df)
 
-    bias = get_index_bias(df)
-    signal, reason = generate_signal(df, bias)
+            bias = get_index_bias(df)
+            signal, reason = generate_signal(df, bias)
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Index Bias", bias)
-    col2.metric("Signal", signal)
-    col3.metric("Status", "ACTIVE")
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Index Bias", bias)
+            col2.metric("Signal", signal)
+            col3.metric("Last Candle", str(df.iloc[-1]["datetime"]))
 
-    st.write("Reason:", reason)
+            st.success(reason)
 
-st.info("Open once before market hours to wake the app.")
+        except Exception:
+            st.warning("NSE data temporarily unavailable. Please try again in 10 seconds.")
