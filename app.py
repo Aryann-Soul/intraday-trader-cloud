@@ -4,21 +4,37 @@ from engine.scanner import scan_symbols
 from datetime import datetime, time as dtime
 import pytz
 
-st.set_page_config(layout="wide")
+# --------------------------------------------------
+# Page config
+# --------------------------------------------------
+st.set_page_config(
+    page_title="Intraday Trading Dashboard",
+    layout="wide"
+)
+
+# --------------------------------------------------
+# Auto refresh every 5 minutes
+# --------------------------------------------------
+st_autorefresh(interval=300000, key="auto_refresh")
+
+# --------------------------------------------------
+# Custom CSS for professional trading UI
+# --------------------------------------------------
 st.markdown("""
 <style>
+
 /* Remove top padding */
 .block-container {
     padding-top: 1.2rem;
 }
 
-/* Title styling */
+/* Main title */
 h1 {
     font-size: 1.8rem;
     font-weight: 700;
 }
 
-/* Card style */
+/* Card container */
 .card {
     background-color: #161B22;
     border-radius: 14px;
@@ -27,7 +43,7 @@ h1 {
     box-shadow: 0 0 0 1px #30363d;
 }
 
-/* Badge styles */
+/* Badges */
 .badge-high {
     color: #ff6b6b;
     font-weight: 700;
@@ -36,14 +52,19 @@ h1 {
     color: #00C805;
     font-weight: 700;
 }
+
 </style>
 """, unsafe_allow_html=True)
+
+# --------------------------------------------------
+# Header
+# --------------------------------------------------
 st.title("📊 Intraday Trading Dashboard")
 st.caption("Auto-refresh | Index aligned | Cloud hosted")
 
-st_autorefresh(interval=300000, key="auto")
-
-
+# --------------------------------------------------
+# Market hours check (IST, Streamlit Cloud safe)
+# --------------------------------------------------
 def is_market_open():
     utc_now = datetime.utcnow()
     india = pytz.timezone("Asia/Kolkata")
@@ -51,33 +72,9 @@ def is_market_open():
     now = ist_now.time()
     return dtime(9, 20) <= now <= dtime(15, 30)
 
+# --------------------------------------------------
+# Signal legend card
+# --------------------------------------------------
 st.markdown("""
 <div class="card">
-<h3>Signal Types</h3>
-<p>🔥 <span class="badge-high">HIGH MOMENTUM</span> — Strong volume & volatility (fast moves)</p>
-<p>✅ <span class="badge-normal">NORMAL</span> — Clean trend-aligned setups</p>
-</div>
-""", unsafe_allow_html=True)
-
-if not is_market_open():
-    st.info("Market not active. Scanner runs between 9:20 AM – 3:30 PM IST.")
-    st.stop()
-
-NSE_200 = [
-    "RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK",
-    "SBIN", "ITC", "LT", "AXISBANK", "KOTAKBANK"
-]
-
-with st.spinner("Scanning market..."):
-    results = scan_symbols(NSE_200)
-
-if results:
-    st.dataframe(
-    results,
-    use_container_width=True,
-    height=420
-)
-    else:
-    st.warning("No high-quality setups right now.")
-
-st.markdown("<h3>📈 Live Market Scanner</h3>", unsafe_allow_html=True)
+<h3>Signal Types
