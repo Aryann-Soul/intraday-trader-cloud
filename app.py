@@ -56,4 +56,7 @@ if st.button("Refresh Signal"):
                 st.warning("Using last cached data (NSE temporarily blocked)")
 
             except Exception:
-                st.error("No data available yet. Please wait and retry.")
+    if not is_market_open():
+        st.info("Market is currently closed. Intraday data will be available after 9:15 AM IST.")
+    else:
+        st.warning("Waiting for first valid NSE data. Please retry in 10–15 seconds.")
