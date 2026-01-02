@@ -1,3 +1,11 @@
+from datetime import datetime, time as dtime
+import pytz
+
+def is_market_open():
+    india = pytz.timezone("Asia/Kolkata")
+    now = datetime.now(india).time()
+    return dtime(9, 15) <= now <= dtime(15, 30)
+
 import streamlit as st
 from engine.data_loader import load_intraday_csv
 from engine.indicators import add_indicators
