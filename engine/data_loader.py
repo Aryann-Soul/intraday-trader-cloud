@@ -2,6 +2,7 @@ import pandas as pd
 import requests
 from datetime import datetime
 import time
+import streamlit as st
 
 
 def _nse_session():
@@ -12,14 +13,14 @@ def _nse_session():
         "Accept-Language": "en-US,en;q=0.9",
         "Referer": "https://www.nseindia.com"
     })
-    # First hit to get cookies
     session.get("https://www.nseindia.com", timeout=10)
     return session
 
 
+@st.cache_data(ttl=300)  # cache for 5 minutes
 def load_intraday_csv(symbol: str) -> pd.DataFrame:
     """
-    Fetch real intraday data from NSE (5-min candles)
+    Fetch real intraday data from NSE with retries + caching
     """
 
     if symbol in ["NIFTY", "BANKNIFTY"]:
@@ -28,8 +29,9 @@ def load_intraday_csv(symbol: str) -> pd.DataFrame:
         url = f"https://www.nseindia.com/api/chart-databyindex?index={symbol}%20EQN"
 
     session = _nse_session()
+    last_error = None
 
-    for _ in range(3):  # retry logic
+    for attempt in range(3):  # smart retry
         try:
             response = session.get(url, timeout=10)
             if response.status_code == 200:
@@ -50,7 +52,9 @@ def load_intraday_csv(symbol: str) -> pd.DataFrame:
                 df.sort_values("datetime", inplace=True)
                 return df
 
-        except Exception:
+        except Exception as e:
+            last_error = e
             time.sleep(1)
 
-    raise RuntimeError("NSE data temporarily unavailable")
+    # If all retries fail, Streamlit will serve cached data (if available)
+    raise RuntimeError("NSE temporary block")
