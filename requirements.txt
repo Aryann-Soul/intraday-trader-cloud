@@ -4,3 +4,4 @@ numpy
 pandas-ta
 requests
 pytz
+streamlit-autorefresh
