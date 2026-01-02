@@ -1,7 +1,12 @@
+BANK_STOCKS = ["HDFCBANK", "ICICIBANK", "SBIN", "AXISBANK", "KOTAKBANK"]
+
 def generate_signal(df, index_bias):
     last = df.iloc[-1]
     prev = df.iloc[-2]
 
+    if symbol in BANK_STOCKS and index_bias != "BANKNIFTY":
+    return "NO TRADE", "Bank stock not aligned with BANKNIFTY"
+    
     if index_bias == "CHOP":
         return "NO TRADE", "Index not trending"
 
