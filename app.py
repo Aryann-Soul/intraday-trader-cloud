@@ -19,7 +19,13 @@ st.set_page_config(
 st_autorefresh(interval=300000, key="auto_refresh")
 
 # --------------------------------------------------
-# Safe CSS (NO triple quotes)
+# Session state init (Watchlist)
+# --------------------------------------------------
+if "watchlist" not in st.session_state:
+    st.session_state.watchlist = []
+
+# --------------------------------------------------
+# Safe CSS (no triple quotes)
 # --------------------------------------------------
 st.markdown(
     "<style>"
@@ -65,7 +71,7 @@ st.markdown(
 )
 
 # --------------------------------------------------
-# Tabs (APP STYLE NAVIGATION)
+# Tabs
 # --------------------------------------------------
 tab1, tab2, tab3 = st.tabs(["📈 Scanner", "⭐ Watchlist", "📊 Summary"])
 
@@ -88,7 +94,11 @@ with tab1:
         st.stop()
 
     # Controls
-    compact = st.toggle("📱 Compact / Pro mode", value=False)
+    col1, col2 = st.columns(2)
+    with col1:
+        compact = st.toggle("📱 Compact / Pro mode", value=False)
+    with col2:
+        min_conf = st.slider("🎯 Minimum Confidence", 50, 90, 50, step=5)
 
     NSE_200 = [
         "RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK",
@@ -103,48 +113,72 @@ with tab1:
     if results:
         df = pd.DataFrame(results)
 
-        # Market summary
-        high_count = (df["Type"] == "HIGH MOMENTUM").sum()
-        normal_count = (df["Type"] == "NORMAL").sum()
+        # Apply confidence filter
+        df = df[df["Confidence"] >= min_conf]
 
-        st.markdown(
-            "<div class='card'>"
-            f"🔥 High Momentum: {high_count}<br>"
-            f"✅ Normal Setups: {normal_count}"
-            "</div>",
-            unsafe_allow_html=True
-        )
+        if df.empty:
+            st.warning("No setups match the selected confidence level.")
+        else:
+            # Market summary
+            high_count = (df["Type"] == "HIGH MOMENTUM").sum()
+            normal_count = (df["Type"] == "NORMAL").sum()
 
-        # Row coloring
-        def highlight(row):
-            if row["Type"] == "HIGH MOMENTUM":
-                return ["background-color:#2a1212"] * len(row)
-            if row["Type"] == "NORMAL":
-                return ["background-color:#102615"] * len(row)
-            return [""] * len(row)
+            st.markdown(
+                "<div class='card'>"
+                f"🔥 High Momentum: {high_count}<br>"
+                f"✅ Normal Setups: {normal_count}"
+                "</div>",
+                unsafe_allow_html=True
+            )
 
-        styled_df = df.style.apply(highlight, axis=1)
+            # Pin to watchlist buttons
+            for _, row in df.iterrows():
+                cols = st.columns([3, 2, 2, 2, 2])
+                cols[0].markdown(f"**{row['Symbol']}**")
+                cols[1].markdown(row["Signal"])
+                cols[2].markdown(row["Type"])
+                cols[3].markdown(str(row["Confidence"]))
+                if cols[4].button("⭐ Pin", key=f"pin_{row['Symbol']}"):
+                    if row["Symbol"] not in st.session_state.watchlist:
+                        st.session_state.watchlist.append(row["Symbol"])
 
-        st.dataframe(
-            styled_df,
-            use_container_width=True,
-            height=320 if compact else 420
-        )
+            # Row coloring table
+            def highlight(row):
+                if row["Type"] == "HIGH MOMENTUM":
+                    return ["background-color:#2a1212"] * len(row)
+                if row["Type"] == "NORMAL":
+                    return ["background-color:#102615"] * len(row)
+                return [""] * len(row)
+
+            st.dataframe(
+                df.style.apply(highlight, axis=1),
+                use_container_width=True,
+                height=320 if compact else 420
+            )
     else:
         st.warning("No high-quality setups right now.")
 
 # ==================================================
-# TAB 2 — WATCHLIST (UI READY)
+# TAB 2 — WATCHLIST
 # ==================================================
 with tab2:
+
     st.markdown(
         "<div class='card'>"
         "<b>⭐ Watchlist</b><br>"
-        "This section is reserved for manually tracked stocks.<br>"
-        "Next step: pin symbols from Scanner."
+        "Pinned stocks from Scanner appear here."
         "</div>",
         unsafe_allow_html=True
     )
+
+    if not st.session_state.watchlist:
+        st.info("No stocks pinned yet.")
+    else:
+        for sym in st.session_state.watchlist:
+            cols = st.columns([4, 2])
+            cols[0].markdown(f"**{sym}**")
+            if cols[1].button("❌ Remove", key=f"rm_{sym}"):
+                st.session_state.watchlist.remove(sym)
 
 # ==================================================
 # TAB 3 — SUMMARY
@@ -152,11 +186,12 @@ with tab2:
 with tab3:
     st.markdown(
         "<div class='card'>"
-        "<b>📊 Market Summary</b><br>"
-        "• Scanner auto-runs every 5 minutes<br>"
-        "• Signals are index-aligned<br>"
+        "<b>📊 System Summary</b><br>"
+        "• Auto-refresh every 5 minutes<br>"
+        "• Confidence-based filtering<br>"
+        "• Watchlist for focused tracking<br>"
         "• HIGH MOMENTUM = aggressive trades<br>"
-        "• NORMAL = safer intraday trades"
+        "• NORMAL = safer intraday setups"
         "</div>",
         unsafe_allow_html=True
     )
