@@ -26,7 +26,8 @@ symbol = st.selectbox(
     ["NIFTY", "BANKNIFTY", "RELIANCE", "TCS"]
 )
 
-if st.button("Refresh Signal"):
+run = st.button("Refresh Signal") or True
+if run:
     with st.spinner("Fetching NSE data..."):
         try:
             df = load_intraday_csv(symbol)
