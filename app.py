@@ -12,6 +12,8 @@ st.set_page_config(layout="wide")
 st.title("📊 Intraday Trading Dashboard (Personal)")
 st.caption("5-min signals | Index aligned | Cloud hosted")
 
+# Auto-refresh every 5 minutes (300 seconds)
+st_autorefresh(interval=300000, key="auto_refresh")
 
 def is_market_open():
     india = pytz.timezone("Asia/Kolkata")
