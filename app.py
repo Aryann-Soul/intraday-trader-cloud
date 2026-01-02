@@ -5,7 +5,39 @@ from datetime import datetime, time as dtime
 import pytz
 
 st.set_page_config(layout="wide")
+st.markdown("""
+<style>
+/* Remove top padding */
+.block-container {
+    padding-top: 1.2rem;
+}
 
+/* Title styling */
+h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+/* Card style */
+.card {
+    background-color: #161B22;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 0 0 1px #30363d;
+}
+
+/* Badge styles */
+.badge-high {
+    color: #ff6b6b;
+    font-weight: 700;
+}
+.badge-normal {
+    color: #00C805;
+    font-weight: 700;
+}
+</style>
+""", unsafe_allow_html=True)
 st.title("📊 Intraday Trading Dashboard")
 st.caption("Auto-refresh | Index aligned | Cloud hosted")
 
