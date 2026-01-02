@@ -29,6 +29,23 @@ if st.button("Refresh Signal"):
             col3.metric("Last Candle", str(df.iloc[-1]["datetime"]))
 
             st.success(reason)
+            st.caption("Live NSE data")
 
         except Exception:
-            st.warning("NSE data temporarily unavailable. Please try again in 10 seconds.")
+            try:
+                # Use cached data if available
+                df = load_intraday_csv(symbol)
+                df = add_indicators(df)
+
+                bias = get_index_bias(df)
+                signal, reason = generate_signal(df, bias)
+
+                col1, col2, col3 = st.columns(3)
+                col1.metric("Index Bias", bias)
+                col2.metric("Signal", signal)
+                col3.metric("Last Candle", str(df.iloc[-1]["datetime"]))
+
+                st.warning("Using last cached data (NSE temporarily blocked)")
+
+            except Exception:
+                st.error("No data available yet. Please wait and retry.")
