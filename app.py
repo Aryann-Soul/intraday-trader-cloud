@@ -51,12 +51,13 @@ def is_market_open():
     now = ist_now.time()
     return dtime(9, 20) <= now <= dtime(15, 30)
 
-
 st.markdown("""
-### Signal Types
-- 🔥 **HIGH MOMENTUM** → Strong volume + volatility (fast moves)
-- ✅ **NORMAL** → Clean trend-aligned setups
-""")
+<div class="card">
+<h3>Signal Types</h3>
+<p>🔥 <span class="badge-high">HIGH MOMENTUM</span> — Strong volume & volatility (fast moves)</p>
+<p>✅ <span class="badge-normal">NORMAL</span> — Clean trend-aligned setups</p>
+</div>
+""", unsafe_allow_html=True)
 
 if not is_market_open():
     st.info("Market not active. Scanner runs between 9:20 AM – 3:30 PM IST.")
@@ -71,6 +72,12 @@ with st.spinner("Scanning market..."):
     results = scan_symbols(NSE_200)
 
 if results:
-    st.dataframe(results, use_container_width=True)
-else:
+    st.dataframe(
+    results,
+    use_container_width=True,
+    height=420
+)
+    else:
     st.warning("No high-quality setups right now.")
+
+st.markdown("<h3>📈 Live Market Scanner</h3>", unsafe_allow_html=True)
