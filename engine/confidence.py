@@ -1,30 +1,26 @@
-def score_signal(df, signal):
-    """
-    Returns confidence (0–100) and risk label
-    """
+def classify_signal(df, signal):
+    if signal == "NO TRADE":
+        return "NO TRADE", 0
+
     latest = df.iloc[-1]
+    confidence = 40  # base
 
-    score = 0
-
-    if signal in ["LONG", "SHORT"]:
-        score += 40
-
-    if abs(latest["ema_20"] - latest["ema_50"]) / latest["close"] > 0.002:
-        score += 20
-
-    if latest["rel_volume"] >= 2:
-        score += 20
+    if latest["rel_volume"] >= 2.5:
+        confidence += 30
     elif latest["rel_volume"] >= 1.5:
-        score += 10
+        confidence += 15
 
-    if latest["atr"] < df["atr"].rolling(20).mean().iloc[-1]:
-        score += 20
+    atr_ratio = latest["atr"] / df["atr"].rolling(20).mean().iloc[-1]
+    if atr_ratio >= 1.5:
+        confidence += 20
+    elif atr_ratio >= 1.1:
+        confidence += 10
 
-    if score >= 75:
-        risk = "LOW"
-    elif score >= 55:
-        risk = "MEDIUM"
+    confidence = min(confidence, 100)
+
+    if confidence >= 75:
+        return "HIGH MOMENTUM", confidence
+    elif confidence >= 50:
+        return "NORMAL", confidence
     else:
-        risk = "HIGH"
-
-    return min(score, 100), risk
+        return "NO TRADE", confidence
