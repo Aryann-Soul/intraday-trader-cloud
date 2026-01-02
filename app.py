@@ -8,24 +8,21 @@ import pandas as pd
 # --------------------------------------------------
 # Page config
 # --------------------------------------------------
-st.set_page_config(
-    page_title="Intraday Trading Dashboard",
-    layout="wide"
-)
+st.set_page_config(page_title="Intraday Trading Dashboard", layout="wide")
 
 # --------------------------------------------------
-# Auto refresh (5 min)
+# Auto refresh
 # --------------------------------------------------
 st_autorefresh(interval=300000, key="auto_refresh")
 
 # --------------------------------------------------
-# Session state init (Watchlist)
+# Session state
 # --------------------------------------------------
 if "watchlist" not in st.session_state:
     st.session_state.watchlist = []
 
 # --------------------------------------------------
-# Safe CSS (no triple quotes)
+# CSS (safe)
 # --------------------------------------------------
 st.markdown(
     "<style>"
@@ -59,7 +56,7 @@ def is_market_open():
     return dtime(9, 20) <= now <= dtime(15, 30)
 
 # --------------------------------------------------
-# Top status bar
+# Status bar
 # --------------------------------------------------
 ist_now = get_ist_time()
 st.markdown(
@@ -80,6 +77,7 @@ tab1, tab2, tab3 = st.tabs(["📈 Scanner", "⭐ Watchlist", "📊 Summary"])
 # ==================================================
 with tab1:
 
+    # Signal types card
     st.markdown(
         "<div class='card'>"
         "<b>Signal Types</b><br>"
@@ -89,37 +87,38 @@ with tab1:
         unsafe_allow_html=True
     )
 
-    if not is_market_open():
-        st.info("Market not active. Scanner runs between 9:20 AM – 3:30 PM IST.")
-        st.stop()
-
-    # Controls
+    # Controls (ALWAYS visible)
     col1, col2 = st.columns(2)
     with col1:
         compact = st.toggle("📱 Compact / Pro mode", value=False)
     with col2:
         min_conf = st.slider("🎯 Minimum Confidence", 50, 90, 50, step=5)
 
+    # Market closed banner (NO stop)
+    if not is_market_open():
+        st.info("Market not active. Scanner runs between 9:20 AM – 3:30 PM IST.")
+
     NSE_200 = [
         "RELIANCE", "TCS", "INFY", "HDFCBANK", "ICICIBANK",
         "SBIN", "ITC", "LT", "AXISBANK", "KOTAKBANK"
     ]
 
-    with st.spinner("Scanning market..."):
-        results = scan_symbols(NSE_200)
+    # Run scanner ONLY if market open
+    results = []
+    if is_market_open():
+        with st.spinner("Scanning market..."):
+            results = scan_symbols(NSE_200)
 
     st.markdown("<h3>📈 Live Market Scanner</h3>", unsafe_allow_html=True)
 
     if results:
         df = pd.DataFrame(results)
-
-        # Apply confidence filter
         df = df[df["Confidence"] >= min_conf]
 
         if df.empty:
-            st.warning("No setups match the selected confidence level.")
+            st.warning("No setups match the selected confidence.")
         else:
-            # Market summary
+            # Summary
             high_count = (df["Type"] == "HIGH MOMENTUM").sum()
             normal_count = (df["Type"] == "NORMAL").sum()
 
@@ -131,7 +130,7 @@ with tab1:
                 unsafe_allow_html=True
             )
 
-            # Pin to watchlist buttons
+            # Pin buttons
             for _, row in df.iterrows():
                 cols = st.columns([3, 2, 2, 2, 2])
                 cols[0].markdown(f"**{row['Symbol']}**")
@@ -142,13 +141,13 @@ with tab1:
                     if row["Symbol"] not in st.session_state.watchlist:
                         st.session_state.watchlist.append(row["Symbol"])
 
-            # Row coloring table
-            def highlight(row):
-                if row["Type"] == "HIGH MOMENTUM":
-                    return ["background-color:#2a1212"] * len(row)
-                if row["Type"] == "NORMAL":
-                    return ["background-color:#102615"] * len(row)
-                return [""] * len(row)
+            # Row coloring
+            def highlight(r):
+                if r["Type"] == "HIGH MOMENTUM":
+                    return ["background-color:#2a1212"] * len(r)
+                if r["Type"] == "NORMAL":
+                    return ["background-color:#102615"] * len(r)
+                return [""] * len(r)
 
             st.dataframe(
                 df.style.apply(highlight, axis=1),
@@ -156,18 +155,15 @@ with tab1:
                 height=320 if compact else 420
             )
     else:
-        st.warning("No high-quality setups right now.")
+        if is_market_open():
+            st.warning("No high-quality setups right now.")
 
 # ==================================================
 # TAB 2 — WATCHLIST
 # ==================================================
 with tab2:
-
     st.markdown(
-        "<div class='card'>"
-        "<b>⭐ Watchlist</b><br>"
-        "Pinned stocks from Scanner appear here."
-        "</div>",
+        "<div class='card'><b>⭐ Watchlist</b></div>",
         unsafe_allow_html=True
     )
 
@@ -187,11 +183,11 @@ with tab3:
     st.markdown(
         "<div class='card'>"
         "<b>📊 System Summary</b><br>"
-        "• Auto-refresh every 5 minutes<br>"
+        "• Scanner auto-runs every 5 minutes<br>"
         "• Confidence-based filtering<br>"
-        "• Watchlist for focused tracking<br>"
+        "• Watchlist support<br>"
         "• HIGH MOMENTUM = aggressive trades<br>"
-        "• NORMAL = safer intraday setups"
+        "• NORMAL = safer trades"
         "</div>",
         unsafe_allow_html=True
     )
